@@ -54,7 +54,16 @@ strong {
 	font-weight: 400;
 }
 
-.button {
+a:link, a:visited {
+	color: #20b2aa;
+	text-decoration: none;
+}
+
+a:hover, a:active {
+	color: #fff;
+}
+
+a.button {
 	display: block;
 	margin: 2em;
 	border-radius: 2px;
@@ -67,4 +76,25 @@ strong {
 	font-size: 24px;
 	font-weight: 400;
 	box-shadow: 1px 1px 6px #333;
+}
+
+.loader {
+	display: block;
+	margin: 20px auto;
+}
+
+.traffic-lights-red, .traffic-lights, .traffic-lights-green
+{ display: block; background: url('../img/trafficlights.png') no-repeat; }
+ 
+.traffic-lights-red { background-position: -2px -0px; width: 32px; height: 32px; }
+.traffic-lights { background-position: -2px -34px; width: 32px; height: 32px; }
+.traffic-lights-green { background-position: -2px -68px; width: 32px; height: 32px; }
+
+.avg-result {
+	text-align: center;
+}
+
+.avg-result  div {
+	display: inline-block;
+	margin: 0 20px;
 }

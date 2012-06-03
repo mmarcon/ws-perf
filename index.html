@@ -23,22 +23,58 @@
 	<head>
 		<meta charset="utf-8">
 		<title>Websocket Performance Gatherer</title>
-		<link rel="stylesheet" type="text/css" href="css/wsperf.css">
+		<link rel="stylesheet" type="text/css" href="/css/wsperf.css">
 		<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;"/>
 		<meta name="apple-mobile-web-app-capable" content="yes" />
 	</head>
 	<body>
-		<h1>WS Perf</h1>
-		<section>
-			<p>
-				WS-Perf runs a set of performance tests to collect information that help you
-				understand how <strong>Websockets</strong> perform in different browsers, OS
-				and devices depending on the network type and conditions.
-			</p>
-		</section>
-		<section>
-			<a href="/test/create" class="button">Create a new test suite</a>
-		</section>
-		<script src="js/wsperf.js"></script>
+		<header class="fixed">
+			<h1>WS Perf</h1>
+		</header>
+		<div class="dynamic">
+
+		</div>
+		<script class="template" type="text/html" data-destination=".dynamic" id="home">
+			<section>
+				<p>
+					WS-Perf runs a set of performance tests to collect information that help you
+					understand how <strong>Websockets</strong> perform in different browsers, OS
+					and devices depending on the network type and conditions.
+				</p>
+			</section>
+			<section>
+				<a href="/test/create" class="button create-test">Create a new test suite</a>
+			</section>
+		</script>
+		<script class="template" type="text/html" data-destination=".dynamic" id="test">
+			<section>
+				<p>
+					Test suite is ready to be run.
+				</p>
+				<p>
+					You can share it with other users by sending them
+					this URL: <a href="<%=TEST_URL%>" title="WSPerf test suite"><%=TEST_URL%></a>
+				</p>
+			</section>
+			<section>
+				<a href="/test/<%=TEST_ID%>/run" class="button run-test" data-test="<%=TEST_ID%>">Run test suite</a>
+				<a href="/test/<%=TEST_ID%>/results" class="button see-test-results" data-test="<%=TEST_ID%>">See results</a>
+			</section>
+		</script>
+		<script class="template" type="text/html" data-destination=".dynamic" id="runner">
+			<section>
+				<p>
+					Running test suite. Results will be available shortly.
+				</p>
+				<img src="/img/loading.gif" alt="Test suite is running" class="loader"/>
+			</section>
+			<!--section class="avg-result">
+				<div class="traffic-lights"></div>
+				<div class="traffic-lights"></div>
+				<div class="traffic-lights"></div>
+			</section-->
+		</script>
+		<script src="/js/resig.js"></script>
+		<script src="/js/wsperf.js"></script>
 	</body>
 </html>
