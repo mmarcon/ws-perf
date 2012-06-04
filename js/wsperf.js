@@ -32,26 +32,34 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
             subscribe,
             reset,
             subscribers,
-            _publish;
+            _publish,
+            _default = function(){};
         open = function(path) {
             _path = path.replace(/^#/,'');
             _publish(_path);
         };
 
         _publish = function(path) {
-            var i, m;
+            var i, m, somethingMatched = false;
             for (i=0;i<_subscribers.length;i++) {
                 m = path.match(_subscribers[i].matcher);
                 if (m) {
                     m.shift();
                     _subscribers[i].callback.apply(null, [path, m]);
+                    somethingMatched = true;
                 }
+            }
+            if (!somethingMatched) {
+                _default.apply(null, [path]);
             }
         };
 
-        subscribe = function(matcher, callback) {
+        subscribe = function(matcher, callback, isDefault) {
             if (typeof callback === 'function') {
                 _subscribers.push({matcher: matcher, callback: callback});
+                if (isDefault) {
+                    _default = callback;
+                }
             }
         };
 
@@ -199,6 +207,7 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
             stats.time = this.end - this.start;
             stats.errors = this.errors > 0;
             stats.close = this.close > 0;
+            stats.debug = this.end + '-' + this.start;
             return stats;
         };
 
@@ -344,6 +353,9 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
         W.Controller.subscribe(/\/test\/(test-\d+-\d+)$/, function(path, matches){
             W.Templater.use('test', {TEST_ID:matches[0], TEST_URL:window.location}, W.attachEventHandlers);
         });
+        W.Controller.subscribe(/\/404/, function(){
+            W.Templater.use('not-found', W.attachEventHandlers);
+        }, true);
         W.Controller.open(window.location.pathname);
     });
 })(window);

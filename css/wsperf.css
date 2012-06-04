@@ -45,7 +45,7 @@ h1 {
 
 p {
 	margin: 1.2em;
-	line-height: 1.2;
+	line-height: 1.3;
 	color: #fff8dc;
 	text-shadow: 1px 1px 0 #333;
 }
@@ -78,7 +78,7 @@ a.button {
 	box-shadow: 1px 1px 6px #333;
 }
 
-.loader {
+.loader, .big-icon {
 	display: block;
 	margin: 20px auto;
 }
