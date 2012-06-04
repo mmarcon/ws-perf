@@ -43,7 +43,7 @@
 				</p>
 			</section>
 			<section>
-				<a href="/test/create" class="button create-test">Create a new test suite</a>
+				<a href="/test/new" class="button create-test">Create a new test suite</a>
 			</section>
 		</script>
 		<script class="template" type="text/html" data-destination=".dynamic" id="test">
@@ -68,11 +68,11 @@
 				</p>
 				<img src="/img/loading.gif" alt="Test suite is running" class="loader"/>
 			</section>
-			<!--section class="avg-result">
-				<div class="traffic-lights"></div>
-				<div class="traffic-lights"></div>
-				<div class="traffic-lights"></div>
-			</section-->
+			<section class="test-progress">
+			</section>
+			<section>
+				<a href="/test/<%=TEST_ID%>/results" class="button see-test-results" data-test="<%=TEST_ID%>" style="visibility:hidden">See results</a>
+			</section>
 		</script>
 		<script src="/js/resig.js"></script>
 		<script src="/js/wsperf.js"></script>

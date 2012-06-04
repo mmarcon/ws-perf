@@ -19,6 +19,12 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
         }
         return ret;
     };
+    W.progress = function(message){
+        var node = W.progress.node || $('.test-progress'),
+        p = document.createElement('p');
+        p.innerHTML = message;
+        node.appendChild(p);
+    };
     W.Controller = (function(){
         var _path = '/',
             _subscribers = [],
@@ -200,17 +206,46 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
             var ts, small = _buildPayload(1), //Basically no payload
                 medium = _buildPayload(1*1024), //1KB
                 large = _buildPayload(1*1024*512); //0.5MB
-            report.bandwidth = {};
+            report.outbandwidth = {};
 
+            W.progress('Testing Websocket upload with small payload');
             ts = new Test(small);
             ts.run(function(stats){
-                report.bandwidth.small = stats;
+                report.outbandwidth.small = stats;
+                W.progress('Testing Websocket upload with medium payload');
                 var tm = new Test(medium);
                 tm.run(function(stats){
-                    report.bandwidth.medium = stats;
+                    report.outbandwidth.medium = stats;
+                    W.progress('Testing Websocket upload with large payload');
                     var tl = new Test(large);
                     tl.run(function(stats){
-                        report.bandwidth.large = stats;
+                        report.outbandwidth.large = stats;
+                        if(typeof alldone === 'function') {
+                            alldone.call(null, report);
+                        }
+                    });
+                });
+            });
+        });
+
+        tests.push(function(alldone){
+            var ts, small = 'payload-request?p=1', //Basically no payload
+                medium = 'payload-request?p=1024', //1KB
+                large = 'payload-request?p=524288'; //0.5MB
+            report.inbandwidth = {};
+
+            W.progress('Testing Websocket download with small payload');
+            ts = new Test(small);
+            ts.run(function(stats){
+                report.inbandwidth.small = stats;
+                W.progress('Testing Websocket download with medium payload');
+                var tm = new Test(medium);
+                tm.run(function(stats){
+                    report.inbandwidth.medium = stats;
+                    W.progress('Testing Websocket download with large payload');
+                    var tl = new Test(large);
+                    tl.run(function(stats){
+                        report.inbandwidth.large = stats;
                         if(typeof alldone === 'function') {
                             alldone.call(null, report);
                         }
@@ -225,12 +260,15 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
                 large = _buildPayload(1*1024*512); //0.5MB
             report.xhr = {};
 
+            W.progress('Testing XHR download with small payload');
             ts = new Test(small);
             ts.runXHR(function(stats){
                 report.xhr.small = stats;
+                W.progress('Testing XHR download with medium payload');
                 var tm = new Test(medium);
                 tm.runXHR(function(stats){
                     report.xhr.medium = stats;
+                    W.progress('Testing XHR download with large payload');
                     var tl = new Test(large);
                     tl.runXHR(function(stats){
                         report.xhr.large = stats;
@@ -244,7 +282,7 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
 
         run = function(ondone){
             var next = function(){
-                var fn = tests.pop();
+                var fn = tests.shift();
                 if (fn) {fn(next);}
                 else if(typeof ondone === 'function') {
                     ondone.call(null, W.TestSuite.getResults());
@@ -279,19 +317,20 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
         runTest = function(e){
             e.preventDefault();
             var testId = this.dataset.test;
-            W.Templater.use('runner', W.attachEventHandlers);
+            W.Templater.use('runner', {TEST_ID: testId}, W.attachEventHandlers);
             W.TestSuite.run(function(results){
+                $('.loader').style.visibility = 'hidden';
+                W.progress('DONE!');
+                $('.see-test-results').style.visibility = 'visible';
                 var xhr = new XMLHttpRequest();
                 xhr.open('POST', '/test/' + testId + '/save');
                 xhr.setRequestHeader('Content-Type', 'application/json');
                 xhr.addEventListener('readystatechange', function(xhrp){
                     if (this.readyState === 4) {
-                        //var test = JSON.parse(this.responseText);
-                        //W.Templater.use('test', {TEST_ID:test.id || '', TEST_URL:test.url || ''}, W.attachEventHandlers);
+                        var result = JSON.parse(this.responseText);
                     }
                 });
                 xhr.send(JSON.stringify(results));
-                console.log(results);
             });
         };
         $('.create-test').addEventListener('click', createTest, true);

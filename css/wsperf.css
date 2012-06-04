@@ -98,3 +98,19 @@ a.button {
 	display: inline-block;
 	margin: 0 20px;
 }
+
+.test-progress {
+	width: 80%;
+	margin: 1em auto;
+	background-color: #222;
+	border-radius: 4px;
+	padding: 0.5em;
+	height: 200px;
+	overflow: auto;
+}
+
+.test-progress p {
+	font-size: 80%;
+	margin: 0.2em 0;
+	color: #f5f5f5;
+}
