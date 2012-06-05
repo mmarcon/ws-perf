@@ -195,11 +195,12 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
             };
 
             xhr = new XMLHttpRequest();
-            xhr.open('GET', '/helper/xhr');
+            xhr.open('POST', '/helper/xhr');
+            xhr.setRequestHeader('Content-Type', 'application/json');
             xhr.onloadstart = onloadstart;
             xhr.onload = onload;
             xhr.onerror = onerror;
-            xhr.send(that.payload);
+            xhr.send(JSON.stringify({p:that.payload}));
         };
 
         Test.prototype.getStats = function(){
@@ -207,7 +208,7 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
             stats.time = this.end - this.start;
             stats.errors = this.errors > 0;
             stats.close = this.close > 0;
-            stats.debug = this.end + '-' + this.start;
+            //stats.debug = this.end + '-' + this.start;
             return stats;
         };
 
