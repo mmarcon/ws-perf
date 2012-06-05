@@ -9,6 +9,7 @@ mkdir web
 cp -r css web
 cp -r img web
 cp -r js web
+cp -r 3rd-party web
 cp index.html web
 echo "Done"
 

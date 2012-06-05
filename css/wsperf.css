@@ -114,3 +114,12 @@ a.button {
 	margin: 0.2em 0;
 	color: #f5f5f5;
 }
+
+.chart {
+	width: 400px;
+	height: 300px;
+	margin: 1em auto;
+	background-color: rgb(124,111,99);
+	background-color: rgba(255,255,255,0.2);
+	border-radius: 4px;
+}

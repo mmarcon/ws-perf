@@ -25,6 +25,7 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
         p.innerHTML = message;
         node.appendChild(p);
     };
+
     W.Controller = (function(){
         var _path = '/',
             _subscribers = [],
@@ -329,9 +330,12 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
             var testId = this.dataset.test;
             W.Templater.use('runner', {TEST_ID: testId}, W.attachEventHandlers);
             W.TestSuite.run(function(results){
+                var seeResultsLink = $('.see-test-results');
                 $('.loader').style.visibility = 'hidden';
                 W.progress('DONE!');
-                $('.see-test-results').style.visibility = 'visible';
+                seeResultsLink.style.visibility = 'visible';
+                //At least for now pass results over using the data attribute in the link
+                seeResultsLink.dataset.results = JSON.stringify(results);
                 var xhr = new XMLHttpRequest();
                 xhr.open('POST', '/test/' + testId + '/save');
                 xhr.setRequestHeader('Content-Type', 'application/json');
@@ -342,9 +346,27 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
                 });
                 xhr.send(JSON.stringify(results));
             });
+        },
+        showResults = function(e){
+            e.preventDefault();
+            if (!this.dataset || !this.dataset.results) return;
+            W.Templater.use('result', W.attachEventHandlers);
+            var results = JSON.parse(this.dataset.results),
+                chart = $('#raphael'),
+                r = Raphael(chart, chart.offsetWidth, chart.offsetHeight),
+                data, bars;
+
+            //Draw
+            data = [[results.outbandwidth.small.time, results.inbandwidth.small.time, results.xhr.small.time],
+                    [results.outbandwidth.medium.time, results.inbandwidth.medium.time, results.xhr.medium.time],
+                    [results.outbandwidth.large.time, results.inbandwidth.large.time, results.xhr.large.time]];
+
+            bars = r.barchart(0, 0, chart.offsetWidth, chart.offsetHeight, data, {legendcolor:'#fff'});
+            bars.label();
         };
         $('.create-test').addEventListener('click', createTest, true);
         $('.run-test').addEventListener('click', runTest, true);
+        $('.see-test-results').addEventListener('click', showResults, true);
     };
 
     window.addEventListener('load', function(){
@@ -358,5 +380,8 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
             W.Templater.use('not-found', W.attachEventHandlers);
         }, true);
         W.Controller.open(window.location.pathname);
+
+        //@todo: Load raphael asynchronously
+
     });
 })(window);
