@@ -19,6 +19,133 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
         }
         return ret;
     };
+
+    W.BrowserDetect = {
+        init: function () {
+            this.browser = this.searchString(this.dataBrowser) || "An unknown browser";
+            this.version = this.searchVersion(navigator.userAgent) || this.searchVersion(navigator.appVersion) || "an unknown version";
+            this.OS = this.searchString(this.dataOS) || "an unknown OS";
+        },
+        searchString: function (data) {
+            for (var i=0;i<data.length;i++) {
+                var dataString = data[i].string;
+                var dataProp = data[i].prop;
+                this.versionSearchString = data[i].versionSearch || data[i].identity;
+                if (dataString) {
+                    if (dataString.indexOf(data[i].subString) != -1)
+                        return data[i].identity;
+                }
+                else if (dataProp)
+                    return data[i].identity;
+            }
+        },
+        searchVersion: function (dataString) {
+            var index = dataString.indexOf(this.versionSearchString);
+            if (index == -1) return;
+            return parseFloat(dataString.substring(index+this.versionSearchString.length+1));
+        },
+        dataBrowser: [
+            {
+                string: navigator.userAgent,
+                subString: "Chrome",
+                identity: "Chrome"
+            },
+            {   string: navigator.userAgent,
+                subString: "OmniWeb",
+                versionSearch: "OmniWeb/",
+                identity: "OmniWeb"
+            },
+            {
+                string: navigator.vendor,
+                subString: "Apple",
+                identity: "Safari",
+                versionSearch: "Version"
+            },
+            {
+                prop: window.opera,
+                identity: "Opera",
+                versionSearch: "Version"
+            },
+            {
+                string: navigator.vendor,
+                subString: "iCab",
+                identity: "iCab"
+            },
+            {
+                string: navigator.vendor,
+                subString: "KDE",
+                identity: "Konqueror"
+            },
+            {
+                string: navigator.userAgent,
+                subString: "Firefox",
+                identity: "Firefox"
+            },
+            {
+                string: navigator.vendor,
+                subString: "Camino",
+                identity: "Camino"
+            },
+            {       // for newer Netscapes (6+)
+                string: navigator.userAgent,
+                subString: "Netscape",
+                identity: "Netscape"
+            },
+            {
+                string: navigator.userAgent,
+                subString: "MSIE",
+                identity: "Explorer",
+                versionSearch: "MSIE"
+            },
+            {
+                string: navigator.userAgent,
+                subString: "Gecko",
+                identity: "Mozilla",
+                versionSearch: "rv"
+            },
+            {       // for older Netscapes (4-)
+                string: navigator.userAgent,
+                subString: "Mozilla",
+                identity: "Netscape",
+                versionSearch: "Mozilla"
+            }
+        ],
+        dataOS : [
+            {
+                string: navigator.platform,
+                subString: "Win",
+                identity: "Windows"
+            },
+            {
+                string: navigator.platform,
+                subString: "Mac",
+                identity: "Mac"
+            },
+            {
+               string: navigator.userAgent,
+               subString: "iPhone",
+               identity: "iPhone/iPod"
+            },
+            {
+               string: navigator.platform,
+               subString: "iPad",
+               identity: "iPad"
+            },
+            {
+               string: navigator.platform,
+               subString: "iPhone",
+               identity: "iPhone"
+            },
+            {
+                string: navigator.platform,
+                subString: "Linux",
+                identity: "Linux"
+            }
+        ]
+
+    };
+
+
     W.progress = function(message){
         var node = W.progress.node || $('.test-progress'),
         p = document.createElement('p');
@@ -135,6 +262,7 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
             this.close = 0;
             this.done = false;
             this.payload = payload;
+            this.info = {};
         };
 
         Test.prototype.run = function(ondone){
@@ -144,17 +272,24 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
                 that.start = Date.now();
                 ws.send(that.payload);
             };
-            onmessage = function(){
+            onmessage = function(e){
                 that.end = Date.now();
                 that.done = true;
-                ws.close();
+                //@todo: figure this out:
+                //Mobile Safari iOS 5 fails at opening other sockets if close on
+                //the first one is invoked immediately.
+                //ws.close();
+                setTimeout(function(){
+                    ws.close();
+                }, 1000);
                 if (typeof ondone === 'function') {
                     ondone.call(that, that.getStats());
                 }
             };
-            onclose = function(){
+            onclose = function(p1,p2){
                 that.end = Date.now();
                 that.close += 1;
+                that.info.close = [p1,p2];
                 if (typeof ondone === 'function' && that.done === false) {
                     ondone.call(that, that.getStats());
                 }
@@ -166,8 +301,15 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
                     ondone.call(that, that.getStats());
                 }
             };
-
-            ws = new WebSocket('wss://' + window.location.host);
+            //@fix: this fixes the weird behavior safari has with
+            //secure websockets and certificates signed by non trusted
+            //authorities. Temporary fix is using non secure connection.
+            if (W.BrowserDetect.browser === 'Safari') {
+                ws = new WebSocket('ws://' + window.location.host);
+            }
+            else {
+                ws = new WebSocket('wss://' + window.location.host);
+            }
             ws.onopen = onopen;
             ws.onmessage = onmessage;
             ws.onclose = onclose;
@@ -209,6 +351,7 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
             stats.time = this.end - this.start;
             stats.errors = this.errors > 0;
             stats.close = this.close > 0;
+            stats.done = this.done;
             //stats.debug = this.end + '-' + this.start;
             return stats;
         };
@@ -302,6 +445,12 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
             next();
         };
         getResults = function(){
+            report.browser = {
+                string: W.BrowserDetect.browser + '-' + W.BrowserDetect.version + '-' + W.BrowserDetect.OS,
+                browser: W.BrowserDetect.browser,
+                version: W.BrowserDetect.version,
+                os: W.BrowserDetect.OS
+            };
             return report;
         };
 
@@ -333,7 +482,6 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
                 var seeResultsLink = $('.see-test-results');
                 $('.loader').style.visibility = 'hidden';
                 W.progress('DONE!');
-                seeResultsLink.style.visibility = 'visible';
                 //At least for now pass results over using the data attribute in the link
                 seeResultsLink.dataset.results = JSON.stringify(results);
                 var xhr = new XMLHttpRequest();
@@ -342,6 +490,13 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
                 xhr.addEventListener('readystatechange', function(xhrp){
                     if (this.readyState === 4) {
                         var result = JSON.parse(this.responseText);
+                        if (result.status === 'OK') {
+                            seeResultsLink.dataset.avg = JSON.stringify(result.avg);
+                        }
+                        else {
+                            seeResultsLink.dataset.avg = 'unavailable';
+                        }
+                        seeResultsLink.style.visibility = 'visible';
                     }
                 });
                 xhr.send(JSON.stringify(results));
@@ -352,14 +507,21 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
             if (!this.dataset || !this.dataset.results) return;
             W.Templater.use('result', W.attachEventHandlers);
             var results = JSON.parse(this.dataset.results),
+                avg = this.dataset.avg === 'unavailable' ? false : JSON.parse(this.dataset.avg),
                 chart = $('#raphael'),
                 r = Raphael(chart, chart.offsetWidth, chart.offsetHeight),
                 data, bars;
 
             //Draw
-            data = [[results.outbandwidth.small.time, results.inbandwidth.small.time, results.xhr.small.time],
-                    [results.outbandwidth.medium.time, results.inbandwidth.medium.time, results.xhr.medium.time],
-                    [results.outbandwidth.large.time, results.inbandwidth.large.time, results.xhr.large.time]];
+
+            data = [
+                [results.outbandwidth.small.time, results.outbandwidth.medium.time, results.outbandwidth.large.time],
+                [avg.outbandwidth.small.time, avg.outbandwidth.medium.time, avg.outbandwidth.large.time],
+                [results.inbandwidth.small.time, results.inbandwidth.medium.time, results.inbandwidth.large.time],
+                [avg.inbandwidth.small.time, avg.inbandwidth.medium.time, avg.inbandwidth.large.time],
+                [results.xhr.small.time, results.xhr.medium.time, results.xhr.large.time],
+                [avg.xhr.small.time, avg.xhr.medium.time, avg.xhr.large.time]
+            ];
 
             bars = r.barchart(0, 0, chart.offsetWidth, chart.offsetHeight, data, {legendcolor:'#fff'});
             bars.label();
@@ -370,6 +532,7 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
     };
 
     window.addEventListener('load', function(){
+        W.BrowserDetect.init();
         W.Controller.subscribe(/\/$/, function(){
             W.Templater.use('home', W.attachEventHandlers);
         });

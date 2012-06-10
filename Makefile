@@ -1,7 +1,10 @@
-.PHONY: all jitsu
+.PHONY: all jitsu minify
 
-all:
+all: minify
 	./scripts/jitsu-prepare.sh
+
+minify:
+	./scripts/closurize.sh
 
 jitsu:
 	cd node; jitsu deploy

@@ -1,0 +1,16 @@
+{
+  "name": "wsperf",
+  "subdomain": "wsperf",
+  "scripts": {
+    "start": "server.js"
+  },
+  "version": "0.0.0-11",
+  "engines": {
+    "node": "0.6.x"
+  },
+  "dependencies": {
+    "ws": "0.4.x",
+    "express": "2.5.x",
+    "mongoose": "2.6.x"
+  }
+}
