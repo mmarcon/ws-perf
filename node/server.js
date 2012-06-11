@@ -31,10 +31,10 @@ var fs = require('fs'),
 var DataStore = (function(){
     var init, store, connection, TestSuiteModel;
 
-    init = function(mongoose, isProduction) {
+    init = function(mongoose, isProduction, connectionString) {
         console.log('Connecting to Mongo [isProduction: ' + isProduction + ']');
         if (isProduction) {
-            connection = mongoose.connect('{PRODUCTION_CREDENTIALS}');
+            connection = mongoose.connect(connectionString);
         }
         else {
             connection = mongoose.connect('mongodb://localhost/wsperf');
@@ -105,7 +105,7 @@ app.use(express.bodyParser());
 app.listen(8000);
 app.use(express.static(path.normalize(__dirname + '/web/')));
 
-DataStore.init(mongoose, process.env.PRODUCTION);
+DataStore.init(mongoose, process.env.PRODUCTION, process.env.MONGO);
 
 app.all('/test/new', function(request, response){
     var hostname = request.headers.host, test, id = generateTestId();
