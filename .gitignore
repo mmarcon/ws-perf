@@ -1,3 +1,5 @@
 node/node_modules
 node/*.pem
+node/pem/*.pem
+node/mongo
 node/web
