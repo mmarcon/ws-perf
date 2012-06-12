@@ -133,7 +133,14 @@ app.get('/test/test-:id/results', function(request, response){
 });
 
 app.all('/helper/xhr', function(request, response){
-    response.send('ACK');
+    var size;
+    if (request.body && request.body.p) {
+        size = parseInt(request.body.p, 10);
+        response.send(buildPayload(size));
+    }
+    else {
+        response.send('ACK');
+    }
 });
 
 var wss = new WS({server: app});

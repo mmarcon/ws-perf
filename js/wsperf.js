@@ -412,20 +412,46 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
             var ts, small = _buildPayload(1), //Basically no payload
                 medium = _buildPayload(1*1024), //1KB
                 large = _buildPayload(1*1024*512); //0.5MB
-            report.xhr = {};
+            report.xhroutbandwidth = {};
+
+            W.progress('Testing XHR upload with small payload');
+            ts = new Test(small);
+            ts.runXHR(function(stats){
+                report.xhroutbandwidth.small = stats;
+                W.progress('Testing XHR upload with medium payload');
+                var tm = new Test(medium);
+                tm.runXHR(function(stats){
+                    report.xhroutbandwidth.medium = stats;
+                    W.progress('Testing XHR upload with large payload');
+                    var tl = new Test(large);
+                    tl.runXHR(function(stats){
+                        report.xhroutbandwidth.large = stats;
+                        if(typeof alldone === 'function') {
+                            alldone.call(null, report);
+                        }
+                    });
+                });
+            });
+        });
+
+        tests.push(function(alldone){
+            var ts, small = '1', //Basically no payload
+                medium = '1024', //1KB
+                large = '524288'; //0.5MB
+            report.xhrinbandwidth = {};
 
             W.progress('Testing XHR download with small payload');
             ts = new Test(small);
             ts.runXHR(function(stats){
-                report.xhr.small = stats;
+                report.xhrinbandwidth.small = stats;
                 W.progress('Testing XHR download with medium payload');
                 var tm = new Test(medium);
                 tm.runXHR(function(stats){
-                    report.xhr.medium = stats;
+                    report.xhrinbandwidth.medium = stats;
                     W.progress('Testing XHR download with large payload');
                     var tl = new Test(large);
                     tl.runXHR(function(stats){
-                        report.xhr.large = stats;
+                        report.xhrinbandwidth.large = stats;
                         if(typeof alldone === 'function') {
                             alldone.call(null, report);
                         }
@@ -519,8 +545,10 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
                 [avg.outbandwidth.small.time, avg.outbandwidth.medium.time, avg.outbandwidth.large.time],
                 [results.inbandwidth.small.time, results.inbandwidth.medium.time, results.inbandwidth.large.time],
                 [avg.inbandwidth.small.time, avg.inbandwidth.medium.time, avg.inbandwidth.large.time],
-                [results.xhr.small.time, results.xhr.medium.time, results.xhr.large.time],
-                [avg.xhr.small.time, avg.xhr.medium.time, avg.xhr.large.time]
+                [results.xhroutbandwidth.small.time, results.xhroutbandwidth.medium.time, results.xhroutbandwidth.large.time],
+                [avg.xhroutbandwidth.small.time, avg.xhroutbandwidth.medium.time, avg.xhroutbandwidth.large.time],
+                [results.xhrinbandwidth.small.time, results.xhrinbandwidth.medium.time, results.xhrinbandwidth.large.time],
+                [avg.xhrinbandwidth.small.time, avg.xhrinbandwidth.medium.time, avg.xhrinbandwidth.large.time]
             ];
 
             bars = r.barchart(0, 0, chart.offsetWidth, chart.offsetHeight, data, {legendcolor:'#fff'});
