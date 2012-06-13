@@ -241,7 +241,7 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
         };
     })();
     W.TestSuite = (function(){
-        var tests = [], run, getResults, _buildPayload, FNS = {}, Test,
+        var tests = [], run, getResults, _buildPayload, FNS = {}, Test, LatencyTest,
         _chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz',
         report = {};
 
@@ -296,7 +296,7 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
             };
             onerror = function(){
                 that.end = Date.now();
-                that.error += 1;
+                that.errors += 1;
                 if (typeof ondone === 'function') {
                     ondone.call(that, that.getStats());
                 }
@@ -331,7 +331,7 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
             };
             onerror = function(){
                 that.end = Date.now();
-                that.error += 1;
+                that.errors += 1;
                 if (typeof ondone === 'function') {
                     ondone.call(that, that.getStats());
                 }
@@ -353,6 +353,118 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
             stats.close = this.close > 0;
             stats.done = this.done;
             //stats.debug = this.end + '-' + this.start;
+            return stats;
+        };
+
+        LatencyTest = function(probes){
+            this.probes = probes || 100;
+            this.results = [];
+            this.errors = 0;
+            this.done = false;
+        };
+
+        LatencyTest.prototype.run = function(ondone) {
+            var ws, onopen, onmessage, onclose, onerror, that = this, counter = 0, send;
+
+            send = function(ws) {
+                ws.send('echo?t=' + Date.now());
+                counter ++;
+            };
+
+            onopen = function(){
+                send(ws);
+            };
+            onmessage = function(e){
+                var end = Date.now(), start = -1;
+                if (counter < that.probes) {
+                    start = parseInt(e.data, 10);
+                    that.results.push((end - start) / 2);
+                    send(ws);
+                }
+                else {
+                    that.done = true;
+                    setTimeout(function(){
+                        ws.close();
+                    }, 1000);
+                    if (typeof ondone === 'function') {
+                        ondone.call(that, that.getStats());
+                    }
+                }
+            };
+            onclose = function(p1,p2){
+                if (typeof ondone === 'function' && that.done === false) {
+                    ondone.call(that, that.getStats());
+                }
+            };
+            onerror = function(){
+                that.end = Date.now();
+                that.errors += 1;
+                if (typeof ondone === 'function') {
+                    ondone.call(that, that.getStats());
+                }
+            };
+            //@fix: this fixes the weird behavior safari has with
+            //secure websockets and certificates signed by non trusted
+            //authorities. Temporary fix is using non secure connection.
+            if (W.BrowserDetect.browser === 'Safari') {
+                ws = new WebSocket('ws://' + window.location.host);
+            }
+            else {
+                ws = new WebSocket('wss://' + window.location.host);
+            }
+            ws.onopen = onopen;
+            ws.onmessage = onmessage;
+            ws.onclose = onclose;
+            ws.onerror = onerror;
+        };
+
+        LatencyTest.prototype.runXHR = function(ondone){
+            var xhr, onloadstart, onload, onclose, onerror, that = this, send, counter = 0;
+
+            send = function(xhr) {
+                xhr.open('POST', '/helper/xhr');
+                xhr.send(JSON.stringify({t:Date.now()}));
+                counter ++;
+            };
+
+            onload = function(xhrp){
+                debugger;
+                var end = Date.now(), start = -1;
+                if (this.readyState === 4) {
+                    var res = JSON.parse(this.responseText);
+                    if (counter < that.probes) {
+                        start = res.t;
+                        that.results.push((end - start) / 2);
+                        send(this);
+                    }
+                    else {
+                        that.done = true;
+                        if (typeof ondone === 'function') {
+                            ondone.call(that, that.getStats());
+                        }
+                    }
+                }
+            };
+            onerror = function(){
+                that.errors += 1;
+                if (typeof ondone === 'function') {
+                    ondone.call(that, that.getStats());
+                }
+            };
+
+            xhr = new XMLHttpRequest();
+            xhr.open('POST', '/helper/xhr');
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.addEventListener('readystatechange', onload);
+            xhr.onerror = onerror;
+            xhr.send(JSON.stringify({t:Date.now()}));
+        };
+
+        LatencyTest.prototype.getStats = function(){
+            var stats = {};
+            stats.results = this.results;
+            stats.errors = this.errors > 0;
+            stats.done = this.done;
             return stats;
         };
 
@@ -409,6 +521,16 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
         });
 
         tests.push(function(alldone){
+            var t;
+            W.progress('Testing Websocket latency');
+            t = new LatencyTest(100);
+            t.run(function(stats){
+                report.latency = stats;
+                alldone.call(null, report);
+            });
+        });
+
+        tests.push(function(alldone){
             var ts, small = _buildPayload(1), //Basically no payload
                 medium = _buildPayload(1*1024), //1KB
                 large = _buildPayload(1*1024*512); //0.5MB
@@ -457,6 +579,16 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
                         }
                     });
                 });
+            });
+        });
+
+        tests.push(function(alldone){
+            var t;
+            W.progress('Testing XHR latency');
+            t = new LatencyTest(100);
+            t.runXHR(function(stats){
+                report.xhrlatency = stats;
+                alldone.call(null, report);
             });
         });
 

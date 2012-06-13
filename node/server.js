@@ -133,10 +133,17 @@ app.get('/test/test-:id/results', function(request, response){
 });
 
 app.all('/helper/xhr', function(request, response){
-    var size;
-    if (request.body && request.body.p) {
-        size = parseInt(request.body.p, 10);
-        response.send(buildPayload(size));
+    var size, time;
+    if (request.body) {
+        if (request.body.p) {
+            size = parseInt(request.body.p, 10);
+            response.send(buildPayload(size));
+        }
+        else if (request.body.t) {
+            time = request.body.t;
+            console.log('echo: ' + time);
+            response.send({t:time});
+        }
     }
     else {
         response.send('ACK');
@@ -147,10 +154,14 @@ var wss = new WS({server: app});
 wss.on('connection', function(ws) {
     console.log('WS Connected');
     ws.on('message', function(message) {
-        var size, arr;
+        var size, arr, time;
         if ((arr = message.match(/payload-request\?p=(\d+)/))) {
             size = parseInt(arr[1], 10);
             ws.send(buildPayload(size));
+        } else if ((arr = message.match(/echo\?t=(\d+)/))) {
+            time = arr[1];
+            //console.log('echo: ' + time);
+            ws.send(time);
         } else {
             console.log(Buffer.byteLength(message, 'utf-8') + " bytes");
             ws.send('ACK');
