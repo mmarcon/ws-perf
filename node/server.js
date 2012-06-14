@@ -60,21 +60,31 @@ var DataStore = (function(){
         TestSuiteModel.find({id:id}, function(err, docs){
             var counter = 0, result = {}, tests;
             docs.forEach(function(value){
-                var t, s;
+                var t, s, sum;
                 counter ++;
                 result.id = value.get('id');
                 tests = value.get('tests');
                 for (t in tests) {
-                    if (tests.hasOwnProperty(t)) {
-                        result[t] = result[t] || {};
-                        for (s in tests[t]) {
-                            result[t][s] = result[t][s] || {};
-                            result[t][s].time = ((typeof result[t][s].time === 'number') ? result[t][s].time * (counter-1) + tests[t][s].time : tests[t][s].time) / counter;
+                    if (tests.hasOwnProperty(t) && !t.match(/^browser$/)) {
+                        if (!t.match(/^.*latency$/)) {
+                            result[t] = result[t] || {};
+                            for (s in tests[t]) {
+                                result[t][s] = result[t][s] || {};
+                                result[t][s].time = ((typeof result[t][s].time === 'number') ? result[t][s].time * (counter-1) + tests[t][s].time : tests[t][s].time) / counter;
+                            }
+                        }
+                        else {
+                            sum = 0;
+                            tests[t].results.forEach(function(val){
+                                sum += val;
+                            });
+                            result[t] = sum / tests[t].results.length;
                         }
                     }
                 }
             });
             if (typeof callback === 'function'){
+                console.log(result);
                 callback.call(result, result);
             }
         });
@@ -141,7 +151,7 @@ app.all('/helper/xhr', function(request, response){
         }
         else if (request.body.t) {
             time = request.body.t;
-            console.log('echo: ' + time);
+            //console.log('echo: ' + time);
             response.send({t:time});
         }
     }

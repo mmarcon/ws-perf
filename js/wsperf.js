@@ -422,13 +422,16 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
             var xhr, onloadstart, onload, onclose, onerror, that = this, send, counter = 0;
 
             send = function(xhr) {
+                xhr = new XMLHttpRequest();
                 xhr.open('POST', '/helper/xhr');
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.addEventListener('readystatechange', onload);
+                xhr.onerror = onerror;
                 xhr.send(JSON.stringify({t:Date.now()}));
                 counter ++;
             };
 
             onload = function(xhrp){
-                debugger;
                 var end = Date.now(), start = -1;
                 if (this.readyState === 4) {
                     var res = JSON.parse(this.responseText);
@@ -587,6 +590,7 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
             W.progress('Testing XHR latency');
             t = new LatencyTest(100);
             t.runXHR(function(stats){
+                debugger;
                 report.xhrlatency = stats;
                 alldone.call(null, report);
             });
