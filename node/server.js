@@ -84,7 +84,6 @@ var DataStore = (function(){
                 }
             });
             if (typeof callback === 'function'){
-                console.log(result);
                 callback.call(result, result);
             }
         });
