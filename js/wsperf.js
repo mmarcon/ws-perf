@@ -590,7 +590,6 @@ window.addEventListener("load",function(){setTimeout(function(){window.scrollTo(
             W.progress('Testing XHR latency');
             t = new LatencyTest(100);
             t.runXHR(function(stats){
-                debugger;
                 report.xhrlatency = stats;
                 alldone.call(null, report);
             });
